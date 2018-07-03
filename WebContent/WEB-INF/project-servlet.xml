@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+ 	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.0.xsd
+	http://www.springframework.org/schema/mvc 
+	http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd">
+
+	<!-- Scans the classpath of this application for @Components to deploy as beans -->
+	<!-- The @Controller annotation indicates that a particular class serves the role of 
+	a controller. Spring does not require you to extend any controller base class or reference 
+	the Servlet API. However, you can still reference Servlet-specific features if you need to.
+	The @Controller annotation acts as a stereotype for the annotated class, indicating its role. 
+	The dispatcher scans such annotated classes for mapped methods and detects @RequestMapping annotations.
+	You can define annotated controller beans explicitly, using a standard Spring bean definition in 
+	the dispatcher's context. However, the @Controller stereotype also allows for autodetection, 
+	aligned with Spring general support for detecting component classes in the classpath and auto-registering 
+	bean definitions for them. To enable autodetection of such annotated controllers, you add component scanning 
+	to your configuration. -->
+	<!-- Scans the classpath of this application for @Components to deploy as 
+		beans -->
+	<context:component-scan base-package="com.project" />
+	<context:component-scan base-package="com.project.controller" />
+	<context:component-scan base-package="com.project.model" />
+	<context:component-scan base-package="com.project.database" />
+	<context:component-scan base-package="com.project.util" />
+	<context:component-scan base-package="com.mobileserviceapi" />
+	
+    <!-- JSR-303 support will be detected on classpath and enabled automatically -->
+	<!-- Configures the @Controller programming model. This tag registers the DefaultAnnotationHandlerMapping 
+	and AnnotationMethodHandlerAdapter beans that are required for Spring MVC to dispatch requests to 
+	@Controllers. The tag configures those two beans with sensible defaults based on what is present in
+	your classpath. -->
+	<mvc:annotation-driven />
+	
+	<!-- Resolves view names to protected .jsp resources within the /WEB-INF/Views directory -->
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/Views/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+	
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+	    <property name="messageConverters">
+	        <list>
+	        	<ref bean="jsonMessageConverter"/>
+	        </list>
+	    </property>
+	</bean>
+	
+	<bean id="jsonMessageConverter" class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+	</bean>
+	    
+	<!-- Configure the multipart resolver -->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!-- one of the properties available; the maximum file size in bytes -->
+        <property name="maxUploadSize" value="9999999999"/>
+    </bean>
+    
+	<!-- Forwards requests to the "/" resource to the "welcome" view -->
+	<mvc:view-controller path="/" view-name="index" />
+	
+	<!-- location of static content (images, js and css files) in the WebContent folder-->
+	<mvc:resources mapping="/resources/**" location="/resources/"/> 
+		
+	<!-- Spring-specific MessageSource implementation that accesses resource bundles using specified basenames, 
+	participating in the Spring ApplicationContext's resource loading. -->
+	<bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basename" value="classpath:messages" />
+		<property name="defaultEncoding" value="UTF-8"/>
+	</bean>
+</beans>

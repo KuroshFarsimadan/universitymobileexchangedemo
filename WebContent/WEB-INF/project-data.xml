@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" 
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:sec="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+	http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/security
+	http://www.springframework.org/schema/security/spring-security.xsd">
+		
+	<!-- DATA SOURCE -->
+	<context:property-placeholder location="classpath*:/db_connection.properties" />
+	
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${db.driver}" />
+		<property name="url" value="${db.url}" />
+		<property name="username" value="${db.username}" />
+		<property name="password" value="${db.password}" />
+	</bean>
+	
+	<!-- Application POJO objects: In Spring, the application objects that are managed
+	by the Spring IoC container are called beans. A Spring bean is an object that is
+	instantiated, assembled, and managed by a Spring IoC container. In Spring, components are also called beans. 
+	The Spring beans are different from the JavaBeans convention. The Spring beans can be any plain 
+	old Java objects (POJOs). A POJO is an ordinary Java object without any specific requirements, 
+	such as extending a specific class or implementing a specific interface. <bean> is 
+	the most basic configuration unit in Spring. It tells Spring to create an object for the application. 
+	These <bean> definitions correspond to the actual objects that make up the application.
+	The id attribute is a string that helps identify the individual bean
+	definition. The class attribute defines the type of the bean and uses the fully
+	qualified class name. The value of the id attribute refers to the collaborating
+	objects.-->
+	<!-- Init. of JDBC bean -->
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+			<property name="dataSource" ref="dataSource"/>
+	</bean>
+	
+	<sec:http auto-config="true" use-expressions="true">
+		<sec:intercept-url pattern="/secureController/*" access="isAuthenticated()" />
+		<sec:intercept-url pattern="/secureController/**" access="hasRole('ROLE_USER')" /> 
+		<sec:intercept-url pattern="/*" access="permitAll" />
+		<sec:form-login
+			login-page="/login"
+			default-target-url="/secureController/secureAll"
+			authentication-failure-url="/loginfail" />
+		<sec:logout logout-success-url="/logout" />
+	</sec:http>
+	
+	<bean id="encoder" class="org.springframework.security.crypto.password.StandardPasswordEncoder" />
+
+	<sec:authentication-manager>
+		<sec:authentication-provider>
+			<sec:password-encoder ref="encoder" />
+			<sec:jdbc-user-service data-source-ref="dataSource"
+				users-by-username-query="select username, password_encrypted, enabled from persons where username=? and enabled = 1"
+				authorities-by-username-query="select u.username, r.role from persons u JOIN user_authority ua ON (u.id = ua.user_id) JOIN roles r ON (r.id = ua.role_id) WHERE u.username = ?" />
+		</sec:authentication-provider>
+	</sec:authentication-manager>
+
+	<sec:global-method-security pre-post-annotations="enabled" />
+    
+	
+</beans>
